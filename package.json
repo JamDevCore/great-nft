@@ -1,0 +1,28 @@
+{
+  "name": "upwork-james-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy-contract": "npx hardhat run --network ropsten scripts/sample-script.js",
+    "verify-contract": "npx hardhat verify --network ropsten 0xeBc9b71a0ef6C6d907BA75D2E6A43ABB007FD40e --constructor-args arguments.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-etherscan": "^2.1.4",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "chai": "^4.3.4",
+    "ethereum-waffle": "^3.4.0",
+    "ethers": "^5.4.1",
+    "hardhat": "^2.4.3",
+    "prettier": "^2.3.0",
+    "prettier-plugin-solidity": "^1.0.0-beta.11"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.2.0"
+  }
+}
