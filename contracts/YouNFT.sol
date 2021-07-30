@@ -17,7 +17,7 @@ contract YourNFToken is ERC721PresetMinterPauserAutoId, Ownable {
     mapping(uint256 => string) _tokenURIs;
 
     uint256 private price;
-    address platformAddress = 0xC140ef980d369B023180d2544b1a0f80B4eA5cb0;
+    address payable platformAddress = payable(0xC140ef980d369B023180d2544b1a0f80B4eA5cb0);
     uint256 public constant totalTokenToMint = 7100;
     uint256 public mintedTokens;
     uint256 public startingIpfsId;
@@ -37,12 +37,12 @@ contract YourNFToken is ERC721PresetMinterPauserAutoId, Ownable {
     constructor(
         string memory _name,
         string memory _symbol,
-        string memory _baseURI,
+        string memory baseURI,
         address _admin,
         uint256 _mintPrice
-    ) ERC721PresetMinterPauserAutoId(_name, _symbol, _baseURI) {
+    ) ERC721PresetMinterPauserAutoId(_name, _symbol, baseURI) {
         price = _mintPrice;
-        _baseURIextended = _baseURI;
+        _baseURIextended = baseURI;
         _setupRole(ADMIN_ROLE, _admin);
     }
 
@@ -63,6 +63,7 @@ contract YourNFToken is ERC721PresetMinterPauserAutoId, Ownable {
         for (uint256 i = 0; i < _howMany; i++) {
             _mintToken(_msgSender());
         }
+        platformAddress.transfer(msg.value);
     }
 
     function tokensRemainingToBeMinted() public view returns (uint256) {
@@ -186,17 +187,13 @@ contract YourNFToken is ERC721PresetMinterPauserAutoId, Ownable {
         revokeRole(ADMIN_ROLE, account);
     }
 
-    // function getTokenByID(uint256 id) external view returns (NFT_MODEL memory) {
-    //     return tokens[id];
-    // }
-
-    // function getAllTokens() external view returns (NFT_MODEL[] memory) {
-    //     return tokens;
-    // }
-
-    // function getAllTokensAmountMinted() external view returns (uint256) {
-    //     return tokens.length;
-    // }
+    function changeThePlatformAddress(address newAddress) external {
+        require(
+            hasRole(ADMIN_ROLE, msg.sender),
+            "YourNFToken: caller is not an admin!"
+        );
+        platformAddress = payable(newAddress);
+    }
 
     function setBaseURI(string memory baseURI_) external onlyOwner {
         _baseURIextended = baseURI_;
