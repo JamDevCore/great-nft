@@ -1,7 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 
-const mnemonic = ''; //TODO: add mnemonic
+const mnemonic = '';
 
 //good-day@byom.de
 

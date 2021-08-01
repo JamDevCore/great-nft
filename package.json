@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy-contract": "npx hardhat run --network ropsten scripts/sample-script.js",
-    "verify-contract": "npx hardhat verify --network ropsten 0xeBc9b71a0ef6C6d907BA75D2E6A43ABB007FD40e --constructor-args arguments.js"
+    "verify-contract": "npx hardhat verify --network ropsten 0x661Ec6c76E22f1966e6840DB73b906e64D3085bC --constructor-args arguments.js"
   },
   "keywords": [],
   "author": "",
