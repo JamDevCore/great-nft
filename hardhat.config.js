@@ -3,7 +3,6 @@ require("@nomiclabs/hardhat-etherscan");
 
 const mnemonic = '';
 
-//good-day@byom.de
 
 module.exports = {
   solidity: {
