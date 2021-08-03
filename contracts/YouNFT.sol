@@ -18,7 +18,7 @@ contract YourNFToken is ERC721PresetMinterPauserAutoId, Ownable {
 
     uint256 private price;
     address payable platformAddress = payable(0xC140ef980d369B023180d2544b1a0f80B4eA5cb0);
-    uint256 public constant totalTokenToMint = 7100;
+    uint256 public constant totalTokenToMint = 7000;
     uint256 public mintedTokens;
     uint256 public startingIpfsId;
     uint256 private lastIPFSID;
@@ -92,7 +92,6 @@ contract YourNFToken is ERC721PresetMinterPauserAutoId, Ownable {
 
     function mintTokenAdmin(uint8 _howMany, address to)
         external
-        payable
         adminOnly
     {
         require(
@@ -100,14 +99,10 @@ contract YourNFToken is ERC721PresetMinterPauserAutoId, Ownable {
             "YourNFToken: minimum 1 tokens need to be minted!"
         );
         require(
-            _howMany <= tokensRemainingToBeMinted(),
+            _howMany <= tokensRemainingToBeMinted() + 100,
             "YourNFToken: purchase amount is greater than the token available!"
         );
         require(_howMany <= 20, "YourNFToken: max 20 tokens at once!");
-        require(
-            price.mul(_howMany) == msg.value,
-            "YourNFToken: insufficient ETH to mint!"
-        );
         if (mintedTokens == 0) {
             lastIPFSID = getRandom(
                 1,
