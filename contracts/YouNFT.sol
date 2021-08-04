@@ -235,4 +235,8 @@ contract YourNFToken is ERC721PresetMinterPauserAutoId, Ownable {
         // If there is a baseURI but no tokenURI, concatenate the tokenID to the baseURI.
         return string(abi.encodePacked(base, tokenId.toString()));
     }
+
+    function getTokenPrice() view external returns(uint256) {
+      return price;
+    }
 }
