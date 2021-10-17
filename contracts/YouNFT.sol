@@ -72,7 +72,7 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
             if(isWhitelist == true){
                 require(isWhiteListed(msg.sender),"User is not whitelisted, wait for public sale");
                 uint256 ownerTokenCount = balanceOf(msg.sender);
-                require(ownerTokenCount < nftPerAddressLimit,"NFTs Per Address during pre-sale is limited to allow fair purchases.");
+                require((ownerTokenCount + _howMany) <= nftPerAddressLimit,"NFTs Per Address during pre-sale is limited to allow fair purchases.");
             }
             
             require(msg.value >= price.mul(_howMany),"YourNFToken: insufficient ETH to mint! Try minting less NFTs");
