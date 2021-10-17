@@ -7,29 +7,36 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract YourNFToken is ERC721PresetMinterPauserAutoId, Ownable {
+contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     using SafeMath for uint256;
     using Strings for uint256;
     Counters.Counter private _tokenIds;
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    mapping(uint256 => string) _tokenURIs;
-
-    uint256 private price;
+    mapping(uint256 => string) private _tokenURIs;
+   
     address payable platformAddress = payable(0xC140ef980d369B023180d2544b1a0f80B4eA5cb0);
+    address[] public whitelistedAddresses;
+    uint256 public price;
     uint256 public constant totalTokenToMint = 7000;
     uint256 public mintedTokens;
     uint256 public startingIpfsId;
+    uint256 public howManyToMint = 20;
+    uint256 public nftPerAddressLimit = 6;
     uint256 private lastIPFSID;
-    string private _baseURIExtended;
     uint256[] public excludedNumbers;
+    string private _baseURIExtended;
     string private _baseURIextended;
+    string private _notRevealedURI;
+    bool public revealed = false;
+    bool public isWhitelist = true;
+    
 
     modifier adminOnly() {
         require(
             hasRole(ADMIN_ROLE, msg.sender),
-            "MelonMarketplace: caller is not an admin!"
+            "Nova Creed: caller is not an admin!"
         );
         _;
     }
@@ -38,32 +45,43 @@ contract YourNFToken is ERC721PresetMinterPauserAutoId, Ownable {
         string memory _name,
         string memory _symbol,
         string memory baseURI,
+        string memory notRevealedURI,
         address _admin,
-        uint256 _mintPrice
+        uint256 _mintPrice,
+        uint256 _howMany,
+        uint256 _nftPerAddessLimit,
+        bool _isWhitelist
     ) ERC721PresetMinterPauserAutoId(_name, _symbol, baseURI) {
         price = _mintPrice;
         _baseURIextended = baseURI;
+        _notRevealedURI = notRevealedURI;
         _setupRole(ADMIN_ROLE, _admin);
+        nftPerAddressLimit = _nftPerAddessLimit;
+        howManyToMint = _howMany;
+        isWhitelist = _isWhitelist;
     }
 
     function createTokens(uint256 _howMany) external payable {
-        require(
-            _howMany > 0,
-            "YourNFToken: minimum 1 tokens need to be minted!"
-        );
-        require(
-            _howMany <= tokensRemainingToBeMinted(),
-            "YourNFToken: purchase amount is greater than the token available!"
-        );
-        require(_howMany <= 20, "YourNFToken: max 20 tokens at once!");
-        require(
-            price.mul(_howMany) == msg.value,
-            "YourNFToken: insufficient ETH to mint!"
-        );
-        for (uint256 i = 0; i < _howMany; i++) {
-            _mintToken(_msgSender());
+        require(!paused(), "Contract paused, no NFTs can be minted right now.");
+        require(_howMany > 0,"YourNFToken: minimum 1 tokens need to be minted!");
+        require(_howMany <= tokensRemainingToBeMinted(),"YourNFToken: purchase amount is greater than the token available!");
+        require(_howMany <= howManyToMint,"YourNFToken: max tokens you can mint at once exceeded!, reduce your amount of tokens you want to mint");
+
+        if(msg.sender != owner()){
+            
+            if(isWhitelist == true){
+                require(isWhiteListed(msg.sender),"User is not whitelisted, wait for public sale");
+                uint256 ownerTokenCount = balanceOf(msg.sender);
+                require(ownerTokenCount < nftPerAddressLimit,"NFTs Per Address during pre-sale is limited to allow fair purchases.");
+            }
+            
+            require(msg.value >= price.mul(_howMany),"YourNFToken: insufficient ETH to mint! Try minting less NFTs");
+            platformAddress.transfer(price.mul(_howMany));
         }
-        platformAddress.transfer(msg.value);
+        
+        for (uint256 i = 0; i < _howMany; i++) {
+        _mintToken(_msgSender());
+        }
     }
 
     function tokensRemainingToBeMinted() public view returns (uint256) {
@@ -84,7 +102,7 @@ contract YourNFToken is ERC721PresetMinterPauserAutoId, Ownable {
         mintedTokens++;
         require(
             !_exists(mintedTokens),
-            "YourNFToken: one of this tokens are already exists!"
+            "YourNFToken: one of these tokens already exists!"
         );
         _safeMint(to, mintedTokens);
         _setTokenURI(mintedTokens, lastIPFSID.toString());
@@ -102,7 +120,7 @@ contract YourNFToken is ERC721PresetMinterPauserAutoId, Ownable {
             _howMany <= tokensRemainingToBeMinted() + 100,
             "YourNFToken: purchase amount is greater than the token available!"
         );
-        require(_howMany <= 20, "YourNFToken: max 20 tokens at once!");
+        //require(_howMany <= howManyToMint, "YourNFToken: max 20 tokens at once!");
         if (mintedTokens == 0) {
             lastIPFSID = getRandom(
                 1,
@@ -204,25 +222,32 @@ contract YourNFToken is ERC721PresetMinterPauserAutoId, Ownable {
         );
         _tokenURIs[tokenId] = _tokenURI;
     }
+    
+    function setNotRevealedURI(string memory _initNotRevealedUri) public onlyOwner {
+        _notRevealedURI = _initNotRevealedUri;
+    }
 
     function _baseURI() internal view virtual override returns (string memory) {
         return _baseURIextended;
     }
 
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        virtual
-        override
-        returns (string memory)
-    {
-        require(
-            _exists(tokenId),
-            "ERC721Metadata: URI query for nonexistent token"
-        );
+    function _getNotRevealedURI() internal view virtual returns (string memory) {
+        return _notRevealedURI;
+    }
 
-        string memory _tokenURI = _tokenURIs[tokenId];
-        string memory base = _baseURI();
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory){
+        require(_exists(tokenId),"ERC721Metadata: URI query for nonexistent token");
+            
+        string memory _tokenURI;
+        string memory base;
+        
+        if(!revealed){
+            _tokenURI = 'hidden.json';
+            base = _getNotRevealedURI();
+        }else{
+            _tokenURI = _tokenURIs[tokenId];
+            base = _baseURI();
+        }
 
         // If there is no base URI, return the token URI.
         if (bytes(base).length == 0) {
@@ -234,6 +259,33 @@ contract YourNFToken is ERC721PresetMinterPauserAutoId, Ownable {
         }
         // If there is a baseURI but no tokenURI, concatenate the tokenID to the baseURI.
         return string(abi.encodePacked(base, tokenId.toString()));
+    }
+    
+    function isWhiteListed(address _user) public view returns(bool){
+      for(uint256 i = 0; i < whitelistedAddresses.length; i++){
+          if(whitelistedAddresses[i] == _user){
+              return true;
+          }
+      }
+      
+      return false;
+    }
+    
+    function whitelistUsers(address[] calldata _users) public onlyOwner {
+        delete whitelistedAddresses;
+        whitelistedAddresses = _users;
+    }
+    
+    function setWhitelist(bool _isWhitelist) public onlyOwner {
+      isWhitelist = _isWhitelist;
+    }
+    
+    function setHowMany(uint256 _howMany) public onlyOwner {
+        howManyToMint = _howMany;
+    }
+ 
+    function setNftPerAddressLimit(uint256 _limit) public onlyOwner(){
+        nftPerAddressLimit = _limit;
     }
 
     function getTokenPrice() view external returns(uint256) {
