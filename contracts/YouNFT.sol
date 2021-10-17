@@ -36,7 +36,7 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     modifier adminOnly() {
         require(
             hasRole(ADMIN_ROLE, msg.sender),
-            "Nova Creed: caller is not an admin!"
+            "YourNFT: caller is not an admin!"
         );
         _;
     }
