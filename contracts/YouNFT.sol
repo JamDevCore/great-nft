@@ -26,7 +26,6 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     uint256 public nftPerAddressLimit = 6;
     uint256 private lastIPFSID;
     uint256[] public excludedNumbers;
-    string private _baseURIExtended;
     string private _baseURIextended;
     string private _notRevealedURI;
     bool public revealed = false;
@@ -59,6 +58,8 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
         nftPerAddressLimit = _nftPerAddessLimit;
         howManyToMint = _howMany;
         isWhitelist = _isWhitelist;
+        //Launch Contract Paused to prevent buys upon deployment.
+        pause();
     }
 
     function createTokens(uint256 _howMany) external payable {
@@ -120,7 +121,7 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
             _howMany <= tokensRemainingToBeMinted() + 100,
             "YourNFToken: purchase amount is greater than the token available!"
         );
-        //require(_howMany <= howManyToMint, "YourNFToken: max 20 tokens at once!");
+        
         if (mintedTokens == 0) {
             lastIPFSID = getRandom(
                 1,
@@ -211,6 +212,10 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     function setBaseURI(string memory baseURI_) external onlyOwner {
         _baseURIextended = baseURI_;
     }
+    
+    function setRevealed(bool _reveal) external onlyOwner {
+        revealed = _reveal;
+    }
 
     function _setTokenURI(uint256 tokenId, string memory _tokenURI)
         internal
@@ -223,7 +228,7 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
         _tokenURIs[tokenId] = _tokenURI;
     }
     
-    function setNotRevealedURI(string memory _initNotRevealedUri) public onlyOwner {
+    function setNotRevealedURI(string memory _initNotRevealedUri) external onlyOwner {
         _notRevealedURI = _initNotRevealedUri;
     }
 
