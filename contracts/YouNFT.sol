@@ -16,10 +16,10 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
 
     mapping(uint256 => string) private _tokenURIs;
    
-    address payable platformAddress = payable(0xC140ef980d369B023180d2544b1a0f80B4eA5cb0);
+    address payable platformAddress = payable(0x7d436a3736a9f83f62Af88232A6D556eC9d05C9B);
     address[] public whitelistedAddresses;
     uint256 public price;
-    uint256 public constant totalTokenToMint = 7000;
+    uint256 public constant totalTokenToMint = 100;
     uint256 public mintedTokens;
     uint256 public startingIpfsId;
     uint256 public howManyToMint = 20;
@@ -27,9 +27,9 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     uint256 private lastIPFSID;
     uint256[] public excludedNumbers;
     string private _baseURIextended;
-    string private _notRevealedURI;
+    string public notRevealedURI;
     bool public revealed = false;
-    bool public isWhitelist = true;
+    bool public isWhitelist = false;
     
 
     modifier adminOnly() {
@@ -43,17 +43,17 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     constructor(
         string memory _name,
         string memory _symbol,
-        string memory baseURI,
-        string memory notRevealedURI,
+        string memory _initBaseURI,
+        string memory _initNotRevealedURI,
         address _admin,
         uint256 _mintPrice,
         uint256 _howMany,
         uint256 _nftPerAddessLimit,
         bool _isWhitelist
-    ) ERC721PresetMinterPauserAutoId(_name, _symbol, baseURI) {
+    ) ERC721PresetMinterPauserAutoId(_name, _symbol, _initBaseURI) {
         price = _mintPrice;
-        _baseURIextended = baseURI;
-        _notRevealedURI = notRevealedURI;
+        setBaseURI(_initBaseURI);
+        setNotRevealedURI(_initNotRevealedURI);
         _setupRole(ADMIN_ROLE, _admin);
         nftPerAddressLimit = _nftPerAddessLimit;
         howManyToMint = _howMany;
@@ -209,12 +209,12 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
         platformAddress = payable(newAddress);
     }
 
-    function setBaseURI(string memory baseURI_) external onlyOwner {
+    function setBaseURI(string memory baseURI_) public onlyOwner {
         _baseURIextended = baseURI_;
     }
     
-    function setRevealed(bool _reveal) external onlyOwner {
-        revealed = _reveal;
+    function setRevealed() external onlyOwner {
+        revealed = true;
     }
 
     function _setTokenURI(uint256 tokenId, string memory _tokenURI)
@@ -228,8 +228,8 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
         _tokenURIs[tokenId] = _tokenURI;
     }
     
-    function setNotRevealedURI(string memory _initNotRevealedUri) external onlyOwner {
-        _notRevealedURI = _initNotRevealedUri;
+    function setNotRevealedURI(string memory _initNotRevealedUri) public onlyOwner {
+        notRevealedURI = _initNotRevealedUri;
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
@@ -237,21 +237,17 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     }
 
     function _getNotRevealedURI() internal view virtual returns (string memory) {
-        return _notRevealedURI;
+        return notRevealedURI;
     }
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory){
         require(_exists(tokenId),"ERC721Metadata: URI query for nonexistent token");
-            
-        string memory _tokenURI;
-        string memory base;
         
-        if(!revealed){
-            _tokenURI = 'hidden.json';
-            base = _getNotRevealedURI();
-        }else{
-            _tokenURI = _tokenURIs[tokenId];
-            base = _baseURI();
+        string memory _tokenURI = _tokenURIs[tokenId];
+        string memory base = _baseURI();
+        
+        if(revealed == false){
+            return notRevealedURI;
         }
 
         // If there is no base URI, return the token URI.
