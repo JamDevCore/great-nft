@@ -75,10 +75,10 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
                 uint256 ownerMintedCount = addressMintBalance[msg.sender];
                 require(ownerMintedCount + _howMany <= nftPerAddressLimit,"NFTs Per Address during pre-sale is limited to allow fair purchases.");
             }
-            
-            require(msg.value >= price.mul(_howMany),"YourNFToken: insufficient ETH to mint! Try minting less NFTs");
-            platformAddress.transfer(price.mul(_howMany));
         }
+        
+        require(msg.value >= price.mul(_howMany),"YourNFToken: insufficient ETH to mint! Try minting less NFTs");
+        platformAddress.transfer(price.mul(_howMany));
         
         for (uint256 i = 0; i < _howMany; i++) {
             addressMintBalance[msg.sender]++;
