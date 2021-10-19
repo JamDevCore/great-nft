@@ -30,7 +30,7 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     string public notRevealedURI;
     bool public revealed = false;
     bool public isWhitelist = false;
-    
+    mapping(address => uint256) public addressMintBalance;
 
     modifier adminOnly() {
         require(
@@ -72,8 +72,8 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
             
             if(isWhitelist == true){
                 require(isWhiteListed(msg.sender),"User is not whitelisted, wait for public sale");
-                uint256 ownerTokenCount = balanceOf(msg.sender);
-                require((ownerTokenCount + _howMany) <= nftPerAddressLimit,"NFTs Per Address during pre-sale is limited to allow fair purchases.");
+                uint256 ownerMintedCount = addressMintBalance[msg.sender];
+                require(ownerMintedCount + _howMany <= nftPerAddressLimit,"NFTs Per Address during pre-sale is limited to allow fair purchases.");
             }
             
             require(msg.value >= price.mul(_howMany),"YourNFToken: insufficient ETH to mint! Try minting less NFTs");
@@ -81,7 +81,8 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
         }
         
         for (uint256 i = 0; i < _howMany; i++) {
-        _mintToken(_msgSender());
+            addressMintBalance[msg.sender]++;
+            _mintToken(_msgSender());
         }
     }
 
