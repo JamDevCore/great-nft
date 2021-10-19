@@ -293,4 +293,8 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     function getTokenPrice() view external returns(uint256) {
       return price;
     }
+
+    function withdraw() public payable onlyOwner {
+      require(payable(msg.sender).send(address(this).balance));
+    }
 }
