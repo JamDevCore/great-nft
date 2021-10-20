@@ -34,6 +34,10 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     bool public revealed = false;
     bool public isWhitelist = false;
     mapping(address => uint256) public addressMintBalance;
+    
+    // Random index assignment
+    uint internal nonce = 0;
+    uint[totalTokenToMint] internal indices;
 
     modifier adminOnly() {
         require(
@@ -105,12 +109,21 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
             lastIPFSID = getIpfsIdToMint();
         }
         mintedTokens++;
-        require(
+        
+        //Not needed more
+        /*require(
             !_exists(mintedTokens),
             "YourNFToken: one of these tokens already exists!"
-        );
-        _safeMint(to, mintedTokens);
-        _setTokenURI(mintedTokens, lastIPFSID.toString());
+        );*/
+        
+        //Get random index
+        uint id = randomIndex();
+        
+        //_safeMint(to, mintedTokens);
+        
+        _safeMint(to, id);
+         
+        _setTokenURI(id, lastIPFSID.toString());
     }
 
     function mintTokenAdmin(uint8 _howMany, address to)
@@ -164,6 +177,8 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
         );
         return seed.mod(to - from) + from;
     }
+    
+    
 
     function getIpfsIdToMint() public view returns (uint256 _nextIpfsId) {
         require(
@@ -313,4 +328,32 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     function withdraw() public payable onlyOwner {
       require(payable(msg.sender).send(address(this).balance));
     }
+    
+    
+        /**
+     * Get random index 
+     */
+    function randomIndex() internal returns (uint) {
+        uint totalSize = totalTokenToMint - mintedTokens;
+        uint index = uint(keccak256(abi.encodePacked(nonce, msg.sender, block.difficulty, block.timestamp))) % totalSize;
+        uint value = 0;
+        if (indices[index] != 0) {
+            value = indices[index];
+        } else {
+            value = index;
+        }
+
+        // Move last value to selected position
+        if (indices[totalSize - 1] == 0) {
+            // Array position not initialized, so use position
+            indices[index] = totalSize - 1;
+        } else {
+            // Array position holds a value so use that
+            indices[index] = indices[totalSize - 1];
+        }
+        nonce++;
+        // Don't allow a zero index, start counting at 1
+        return value.add(1);
+    }
+    
 }
