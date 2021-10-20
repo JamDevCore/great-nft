@@ -17,7 +17,10 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     mapping(uint256 => string) private _tokenURIs;
    
     address payable platformAddress = payable(0x7d436a3736a9f83f62Af88232A6D556eC9d05C9B);
-    address[] public whitelistedAddresses;
+    //address[] public whitelistedAddresses;
+    
+    mapping(address => bool) public whitelist;
+    
     uint256 public price;
     uint256 public constant totalTokenToMint = 100;
     uint256 public mintedTokens;
@@ -264,19 +267,32 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     }
     
     function isWhiteListed(address _user) public view returns(bool){
-      for(uint256 i = 0; i < whitelistedAddresses.length; i++){
+      /*for(uint256 i = 0; i < whitelistedAddresses.length; i++){
           if(whitelistedAddresses[i] == _user){
               return true;
           }
+      }*/
+      
+      if(whitelist[_user]){
+          return true;
       }
       
       return false;
     }
     
-    function whitelistUsers(address[] calldata _users) public onlyOwner {
-        delete whitelistedAddresses;
-        whitelistedAddresses = _users;
+    function addWhitelistUsers(address[] calldata _users) public onlyOwner {
+        /*delete whitelistedAddresses;
+        whitelistedAddresses = _users;*/
+        for(uint256 i = 0; i < _users.length; i++){
+          whitelist[_users[i]] = true;
+        }
     }
+    
+    function removeWhitelistUsers(address[] calldata _users) public onlyOwner {
+        for(uint256 i = 0; i < _users.length; i++){
+          whitelist[_users[i]] = false;
+        }
+    } 
     
     function setWhitelist(bool _isWhitelist) public onlyOwner {
       isWhitelist = _isWhitelist;
