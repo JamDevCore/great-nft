@@ -121,7 +121,7 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
             _howMany > 0,
             "YourNFToken: minimum 1 tokens need to be minted!"
         );
-        require(_howMany <= 20, "YourNFToken: max 20 tokens at once!");
+        /*require(_howMany <= 20, "YourNFToken: max 20 tokens at once!");*/
         require(
             getAdminRemainingMint() > 0,
             "YourNFToken: All admin token minted"
