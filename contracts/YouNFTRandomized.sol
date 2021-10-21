@@ -84,7 +84,7 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
             }
         }
         
-        require(msg.value >= price.mul(_howMany),"YourNFToken: insufficient ETH to mint! Try minting less NFTs");
+        require(msg.value == price.mul(_howMany),"YourNFToken: insufficient ETH to mint! Try minting less NFTs");
         platformAddress.transfer(price.mul(_howMany));
         
         for (uint256 i = 0; i < _howMany; i++) {

@@ -22,13 +22,15 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     mapping(address => bool) public whitelist;
     
     uint256 public price;
-    uint256 public constant totalTokenToMint = 100;
+    uint256 public constant totalTokenToMint = 1000;
     uint256 public mintedTokens;
     uint256 public startingIpfsId;
     uint256 public howManyToMint = 20;
     uint256 public nftPerAddressLimit = 6;
     uint256 private lastIPFSID;
     uint256[] public excludedNumbers;
+    uint256 public constant ADMIN_MINT = 150;
+    uint256 public adminMinted;
     string private _baseURIextended;
     string public notRevealedURI;
     bool public revealed = false;
@@ -80,13 +82,12 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
             }
         }
         
-        require(msg.value >= price.mul(_howMany),"YourNFToken: insufficient ETH to mint! Try minting less NFTs");
-        platformAddress.transfer(price.mul(_howMany));
-        
+        require(msg.value == price.mul(_howMany),"YourNFToken: insufficient ETH to mint! Try minting less NFTs");
         for (uint256 i = 0; i < _howMany; i++) {
             addressMintBalance[msg.sender]++;
             _mintToken(_msgSender());
         }
+        platformAddress.transfer(price.mul(_howMany));
     }
 
     function tokensRemainingToBeMinted() public view returns (uint256) {
@@ -121,11 +122,12 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
             _howMany > 0,
             "YourNFToken: minimum 1 tokens need to be minted!"
         );
+        require(_howMany <= 20, "YourNFToken: max 20 tokens at once!");
         require(
-            _howMany <= tokensRemainingToBeMinted() + 100,
-            "YourNFToken: purchase amount is greater than the token available!"
+            getAdminRemainingMint() > 0,
+            "YourNFToken: All admin token minted"
         );
-        
+        require(_howMany <= getAdminRemainingMint(), "YourNFToken: Token should be less than remaining amount to mint");
         if (mintedTokens == 0) {
             lastIPFSID = getRandom(
                 1,
@@ -138,6 +140,7 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
         }
         for (uint256 i = 0; i < _howMany; i++) {
             _mintToken(to);
+            adminMinted++;
         }
     }
 
@@ -179,6 +182,10 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
 
     function isAllTokenMinted() public view returns (bool) {
         return mintedTokens == totalTokenToMint;
+    }
+
+    function getAdminRemainingMint() public view returns (uint256) {
+        return ADMIN_MINT.sub(adminMinted);
     }
 
     function setPrice(uint256 newPrice) external {
@@ -267,12 +274,7 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     }
     
     function isWhiteListed(address _user) public view returns(bool){
-      /*for(uint256 i = 0; i < whitelistedAddresses.length; i++){
-          if(whitelistedAddresses[i] == _user){
-              return true;
-          }
-      }*/
-      
+
       if(whitelist[_user]){
           return true;
       }
@@ -281,8 +283,7 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     }
     
     function addWhitelistUsers(address[] calldata _users) public onlyOwner {
-        /*delete whitelistedAddresses;
-        whitelistedAddresses = _users;*/
+
         for(uint256 i = 0; i < _users.length; i++){
           whitelist[_users[i]] = true;
         }
