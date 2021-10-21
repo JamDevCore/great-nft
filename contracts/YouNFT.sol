@@ -17,7 +17,6 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     mapping(uint256 => string) private _tokenURIs;
    
     address payable platformAddress = payable(0x7d436a3736a9f83f62Af88232A6D556eC9d05C9B);
-    //address[] public whitelistedAddresses;
     
     mapping(address => bool) public whitelist;
     
