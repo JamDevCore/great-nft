@@ -167,7 +167,7 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
         return seed.mod(to - from) + from;
     }
 
-    function getIpfsIdToMint() private returns (uint256 _nextIpfsId) {
+    function getIpfsIdToMint() private view returns (uint256 _nextIpfsId) {
         require(
             !isAllTokenMinted(),
             "YourNFToken: all tokens have been minted!"
