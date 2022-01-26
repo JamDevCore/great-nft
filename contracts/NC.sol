@@ -21,7 +21,7 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     mapping(address => bool) public whitelist;
     
     uint256 public price;
-    uint256 public constant totalTokenToMint = 1000;
+    uint256 public constant totalTokenToMint = 4321;
     uint256 public mintedTokens;
     uint256 public startingIpfsId;
     uint256 public howManyToMint = 20;
