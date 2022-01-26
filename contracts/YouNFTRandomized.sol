@@ -17,24 +17,27 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     mapping(uint256 => string) private _tokenURIs;
    
     address payable platformAddress = payable(0x7d436a3736a9f83f62Af88232A6D556eC9d05C9B);
+    //address[] public whitelistedAddresses;
     
     mapping(address => bool) public whitelist;
     
     uint256 public price;
-    uint256 public constant totalTokenToMint = 1000;
+    uint256 public constant totalTokenToMint = 100;
     uint256 public mintedTokens;
     uint256 public startingIpfsId;
     uint256 public howManyToMint = 20;
     uint256 public nftPerAddressLimit = 6;
     uint256 private lastIPFSID;
     uint256[] public excludedNumbers;
-    uint256 public constant ADMIN_MINT = 150;
-    uint256 public adminMinted;
     string private _baseURIextended;
     string public notRevealedURI;
     bool public revealed = false;
     bool public isWhitelist = false;
     mapping(address => uint256) public addressMintBalance;
+    
+    // Random index assignment
+    uint internal nonce = 0;
+    uint[totalTokenToMint] internal indices;
 
     modifier adminOnly() {
         require(
@@ -82,11 +85,12 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
         }
         
         require(msg.value == price.mul(_howMany),"YourNFToken: insufficient ETH to mint! Try minting less NFTs");
+        platformAddress.transfer(price.mul(_howMany));
+        
         for (uint256 i = 0; i < _howMany; i++) {
             addressMintBalance[msg.sender]++;
             _mintToken(_msgSender());
         }
-        platformAddress.transfer(price.mul(_howMany));
     }
 
     function tokensRemainingToBeMinted() public view returns (uint256) {
@@ -105,12 +109,21 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
             lastIPFSID = getIpfsIdToMint();
         }
         mintedTokens++;
-        require(
+        
+        //Not needed more
+        /*require(
             !_exists(mintedTokens),
             "YourNFToken: one of these tokens already exists!"
-        );
-        _safeMint(to, mintedTokens);
-        _setTokenURI(mintedTokens, lastIPFSID.toString());
+        );*/
+        
+        //Get random index
+        uint id = randomIndex();
+        
+        //_safeMint(to, mintedTokens);
+        
+        _safeMint(to, id);
+         
+        _setTokenURI(id, lastIPFSID.toString());
     }
 
     function mintTokenAdmin(uint8 _howMany, address to)
@@ -121,12 +134,11 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
             _howMany > 0,
             "YourNFToken: minimum 1 tokens need to be minted!"
         );
-        /*require(_howMany <= 20, "YourNFToken: max 20 tokens at once!");*/
         require(
-            getAdminRemainingMint() > 0,
-            "YourNFToken: All admin token minted"
+            _howMany <= tokensRemainingToBeMinted() + 100,
+            "YourNFToken: purchase amount is greater than the token available!"
         );
-        require(_howMany <= getAdminRemainingMint(), "YourNFToken: Token should be less than remaining amount to mint");
+        
         if (mintedTokens == 0) {
             lastIPFSID = getRandom(
                 1,
@@ -139,7 +151,6 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
         }
         for (uint256 i = 0; i < _howMany; i++) {
             _mintToken(to);
-            adminMinted++;
         }
     }
 
@@ -166,8 +177,10 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
         );
         return seed.mod(to - from) + from;
     }
+    
+    
 
-    function getIpfsIdToMint() private view returns (uint256 _nextIpfsId) {
+    function getIpfsIdToMint() public view returns (uint256 _nextIpfsId) {
         require(
             !isAllTokenMinted(),
             "YourNFToken: all tokens have been minted!"
@@ -181,10 +194,6 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
 
     function isAllTokenMinted() public view returns (bool) {
         return mintedTokens == totalTokenToMint;
-    }
-
-    function getAdminRemainingMint() public view returns (uint256) {
-        return ADMIN_MINT.sub(adminMinted);
     }
 
     function setPrice(uint256 newPrice) external {
@@ -273,7 +282,12 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     }
     
     function isWhiteListed(address _user) public view returns(bool){
-
+      /*for(uint256 i = 0; i < whitelistedAddresses.length; i++){
+          if(whitelistedAddresses[i] == _user){
+              return true;
+          }
+      }*/
+      
       if(whitelist[_user]){
           return true;
       }
@@ -282,7 +296,8 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     }
     
     function addWhitelistUsers(address[] calldata _users) public onlyOwner {
-
+        /*delete whitelistedAddresses;
+        whitelistedAddresses = _users;*/
         for(uint256 i = 0; i < _users.length; i++){
           whitelist[_users[i]] = true;
         }
@@ -313,4 +328,32 @@ contract YourNFT is ERC721PresetMinterPauserAutoId, Ownable {
     function withdraw() public payable onlyOwner {
       require(payable(msg.sender).send(address(this).balance));
     }
+    
+    
+        /**
+     * Get random index 
+     */
+    function randomIndex() internal returns (uint) {
+        uint totalSize = totalTokenToMint - mintedTokens;
+        uint index = uint(keccak256(abi.encodePacked(nonce, msg.sender, block.difficulty, block.timestamp))) % totalSize;
+        uint value = 0;
+        if (indices[index] != 0) {
+            value = indices[index];
+        } else {
+            value = index;
+        }
+
+        // Move last value to selected position
+        if (indices[totalSize - 1] == 0) {
+            // Array position not initialized, so use position
+            indices[index] = totalSize - 1;
+        } else {
+            // Array position holds a value so use that
+            indices[index] = indices[totalSize - 1];
+        }
+        nonce++;
+        // Don't allow a zero index, start counting at 1
+        return value.add(1);
+    }
+    
 }
